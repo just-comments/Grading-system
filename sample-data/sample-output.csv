@@ -1,0 +1,13 @@
+Student Name,Group ID,Assignment 1,Assignment 2,Midterm,Final,Participation,weightedScore,groupScore,finalGrade
+Alice Johnson,G1,82,88,79,91,10,73.95,74.70,B
+Ben Carter,G1,84,85,77,90,9,72.95,74.70,B
+Chloe Singh,G2,90,92,88,95,10,79.30,78.95,A
+Daniel Kim,G2,89,91,86,93,9,78.60,78.95,A
+Eva Martinez,G3,74,78,69,81,8,66.15,66.75,C
+Farhan Ali,G3,76,80,72,84,8,67.35,66.75,C
+Grace Lee,G4,95,93,90,97,10,81.95,81.55,A
+Henry Brown,G4,92,94,89,96,10,81.15,81.55,A
+Ivy Chen,G5,68,71,65,73,7,59.40,60.70,D
+Jacob Wilson,G5,70,69,67,75,8,62.00,60.70,D
+Kavya Nair,,88,87,84,90,9,75.85,,B
+Liam Smith,,58,60,55,62,6,52.20,,D
