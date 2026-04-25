@@ -4,6 +4,8 @@ from collections import defaultdict
 from math import sqrt
 from typing import Any
 
+from .parsing import normalize_number
+
 DEFAULT_BOUNDARIES = [
     {"grade": "A", "min": 85.0},
     {"grade": "B", "min": 75.0},
@@ -11,23 +13,6 @@ DEFAULT_BOUNDARIES = [
     {"grade": "D", "min": 50.0},
     {"grade": "F", "min": 0.0},
 ]
-
-
-def normalize_number(value: Any) -> float | None:
-    if isinstance(value, bool):
-        return None
-
-    if isinstance(value, (int, float)):
-        return float(value)
-
-    text = str(value or "").strip().replace(",", "")
-    if not text:
-        return None
-
-    try:
-        return float(text)
-    except ValueError:
-        return None
 
 
 def round_number(value: float) -> float:
@@ -84,7 +69,18 @@ def histogram(values: list[float], bucket_count: int = 8) -> list[dict[str, floa
 
     minimum = min(values)
     maximum = max(values)
-    value_range = maximum - minimum or 1.0
+
+    if minimum == maximum:
+        return [
+            {
+                "label": f"{minimum:.1f} - {maximum:.1f}",
+                "start": round_number(minimum),
+                "end": round_number(maximum),
+                "count": len(values),
+            },
+        ]
+
+    value_range = maximum - minimum
     bucket_size = value_range / bucket_count
 
     buckets: list[dict[str, float | int | str]] = []
