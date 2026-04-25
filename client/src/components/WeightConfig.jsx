@@ -3,7 +3,9 @@ import { Check, SlidersHorizontal } from "lucide-react";
 export default function WeightConfig({
   components,
   weights,
+  maxMarks,
   onWeightChange,
+  onMaxMarksChange,
   onEqualizeWeights,
   totalWeight,
   dataset,
@@ -37,13 +39,23 @@ export default function WeightConfig({
 
           <div className="space-y-4">
         {components.map((component) => (
-            <div key={component} className="grid items-center gap-4 border-b border-white/10 pb-4 last:border-b-0 md:grid-cols-[280px,1fr,140px]">
+            <div key={component} className="grid items-center gap-4 border-b border-white/10 pb-4 last:border-b-0 md:grid-cols-[280px,100px,1fr,140px]">
               <div className="flex items-center gap-4">
                 <span className="flex h-6 w-6 items-center justify-center bg-[#4f8cff] text-white">
                   <Check size={14} />
                 </span>
                 <span className="text-2xl font-semibold text-white">{component}</span>
               </div>
+              <input
+                className="input text-center font-mono text-lg"
+                min="0"
+                step="1"
+                type="number"
+                placeholder="Max"
+                value={maxMarks[component] ?? ""}
+                onChange={(event) => onMaxMarksChange(component, event.target.value)}
+                title="Max marks for this component"
+              />
               <input
                 min="0"
                 max="100"
@@ -64,6 +76,10 @@ export default function WeightConfig({
             </div>
         ))}
           </div>
+
+          <p className="mt-4 text-sm text-slate-500">
+            Enter max marks per component to scale raw scores into percentages before weighting.
+          </p>
         </div>
       </div>
     </section>

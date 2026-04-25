@@ -28,6 +28,7 @@ class GradingDefinition(BaseModel):
 class ComputeConfig(BaseModel):
     components: list[str] = Field(default_factory=list)
     weights: dict[str, float] = Field(default_factory=dict)
+    maxMarks: dict[str, float] = Field(default_factory=dict)
     mode: Literal["default", "statistical", "custom"] = "default"
     groupStrategy: Literal["shared", "normalized"] = "shared"
     grading: GradingDefinition = Field(default_factory=GradingDefinition)
