@@ -6,18 +6,19 @@ from pathlib import Path
 
 
 def ensure_optional_site_packages() -> None:
+    runtime_base = (
+        Path.home()
+        / ".cache"
+        / "codex-runtimes"
+        / "codex-primary-runtime"
+        / "dependencies"
+        / "python"
+    )
+
     candidates = [
         os.getenv("CODEX_BUNDLED_PYTHON_SITE_PACKAGES", "").strip(),
-        str(
-            Path.home()
-            / ".cache"
-            / "codex-runtimes"
-            / "codex-primary-runtime"
-            / "dependencies"
-            / "python"
-            / "Lib"
-            / "site-packages"
-        ),
+        str(runtime_base / "Lib" / "site-packages"),
+        str(runtime_base / "lib" / f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages"),
     ]
 
     for raw_candidate in candidates:

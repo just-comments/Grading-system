@@ -30,7 +30,7 @@ class ComputeConfig(BaseModel):
     weights: dict[str, float] = Field(default_factory=dict)
     mode: Literal["default", "statistical", "custom"] = "default"
     groupStrategy: Literal["shared", "normalized"] = "shared"
-    grading: GradingDefinition
+    grading: GradingDefinition = Field(default_factory=GradingDefinition)
 
 
 class ComputeRequest(BaseModel):

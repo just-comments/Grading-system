@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.exceptions import RequestValidationError
@@ -33,7 +33,7 @@ app.add_middleware(
 
 @app.get("/health")
 def health() -> dict[str, str | bool]:
-    return {"ok": True, "timestamp": datetime.utcnow().isoformat() + "Z"}
+    return {"ok": True, "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
 @app.exception_handler(HTTPException)
