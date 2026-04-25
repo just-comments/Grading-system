@@ -123,6 +123,14 @@ def resolve_boundaries(mode: str, weighted_scores: list[float], grading: dict[st
         ]
         return sorted(boundaries, key=lambda rule: rule["min"], reverse=True)
 
+    boundaries = grading.get("boundaries", [])
+    if boundaries:
+        return sorted(
+            [{"grade": rule["grade"], "min": float(rule.get("min", 0.0))} for rule in boundaries],
+            key=lambda rule: rule["min"],
+            reverse=True,
+        )
+
     return [boundary.copy() for boundary in DEFAULT_BOUNDARIES]
 
 
@@ -154,7 +162,11 @@ def compute_component_score(row: dict[str, Any], component: str) -> float | None
     return normalize_number(row.get(component))
 
 
-def compute_weighted_score(row: dict[str, Any], weight_entries: list[dict[str, float | str]]) -> tuple[float, list[str]]:
+def compute_weighted_score(
+    row: dict[str, Any],
+    weight_entries: list[dict[str, float | str]],
+    max_marks: dict[str, float] | None = None,
+) -> tuple[float, list[str]]:
     total = 0.0
     missing_fields: list[str] = []
 
@@ -166,7 +178,11 @@ def compute_weighted_score(row: dict[str, Any], weight_entries: list[dict[str, f
             missing_fields.append(component)
             continue
 
-        total += numeric_value * (weight / 100.0)
+        cap = max_marks.get(component) if max_marks else None
+        if cap and cap > 0:
+            total += (numeric_value / cap) * weight
+        else:
+            total += numeric_value * (weight / 100.0)
 
     return round_number(total), missing_fields
 
@@ -175,6 +191,7 @@ def aggregate_groups(
     rows: list[dict[str, Any]],
     group_column: str,
     weight_entries: list[dict[str, float | str]],
+    max_marks: dict[str, float] | None = None,
 ) -> dict[str, dict[str, Any]]:
     grouped_rows: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
@@ -195,7 +212,7 @@ def aggregate_groups(
             ]
             component_averages[component] = round_number(mean(values)) if values else None
 
-        weighted_score, _ = compute_weighted_score(component_averages, weight_entries)
+        weighted_score, _ = compute_weighted_score(component_averages, weight_entries, max_marks)
         summaries[group_id] = {
             "groupId": group_id,
             "members": members,
@@ -210,6 +227,7 @@ def apply_group_strategy(
     dataset: dict[str, Any],
     config: dict[str, Any],
     weight_entries: list[dict[str, float | str]],
+    max_marks: dict[str, float] | None = None,
 ) -> list[dict[str, Any]]:
     rows = dataset["rows"]
     group_column = dataset.get("groupColumn")
@@ -217,7 +235,7 @@ def apply_group_strategy(
     if dataset.get("detectedType") != "group" or not group_column:
         processed_rows = []
         for row in rows:
-            weighted_score, missing_fields = compute_weighted_score(row, weight_entries)
+            weighted_score, missing_fields = compute_weighted_score(row, weight_entries, max_marks)
             processed_rows.append(
                 {
                     **row,
@@ -229,12 +247,12 @@ def apply_group_strategy(
             )
         return processed_rows
 
-    group_summaries = aggregate_groups(rows, group_column, weight_entries)
+    group_summaries = aggregate_groups(rows, group_column, weight_entries, max_marks)
     processed_rows: list[dict[str, Any]] = []
 
     for row in rows:
         group_id = str(row.get(group_column, "")).strip()
-        individual_score, missing_fields = compute_weighted_score(row, weight_entries)
+        individual_score, missing_fields = compute_weighted_score(row, weight_entries, max_marks)
         group_summary = group_summaries.get(group_id) if group_id else None
         weighted_score = (
             group_summary["weightedScore"]
@@ -271,7 +289,8 @@ def grade_dataset(dataset: dict[str, Any], config: dict[str, Any]) -> dict[str, 
     weight_entries = sanitize_weights(config["weights"], config["components"])
     validate_weights(weight_entries)
 
-    scored_rows = apply_group_strategy(dataset, config, weight_entries)
+    max_marks: dict[str, float] = config.get("maxMarks", {})
+    scored_rows = apply_group_strategy(dataset, config, weight_entries, max_marks or None)
     weighted_scores = [float(row["weightedScore"]) for row in scored_rows]
     boundaries = resolve_boundaries(config["mode"], weighted_scores, config["grading"])
 

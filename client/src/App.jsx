@@ -29,6 +29,7 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [datasetState, setDatasetState] = useState(null);
   const [weights, setWeights] = useState({});
+  const [maxMarks, setMaxMarks] = useState({});
   const [gradingConfig, setGradingConfig] = useState(buildDefaultGradingConfig());
   const [results, setResults] = useState(null);
   const [savedConfigurations, setSavedConfigurations] = useState([]);
@@ -114,11 +115,19 @@ export default function App() {
       setIsComputing(true);
       try {
         setStatus("Computing weighted scores and analytics...");
+        const activeMaxMarks = {};
+        for (const [key, value] of Object.entries(maxMarks)) {
+          if (value && Number(value) > 0) {
+            activeMaxMarks[key] = Number(value);
+          }
+        }
+
         const nextResults = await computeResults({
           sessionId: datasetState.sessionId,
           config: {
             components: dataset.numericColumns,
             weights,
+            maxMarks: activeMaxMarks,
             mode: gradingConfig.mode,
             grading: gradingConfig.grading,
             groupStrategy: gradingConfig.groupStrategy,
@@ -151,7 +160,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [datasetState, dataset, totalWeight, weights, gradingConfig]);
+  }, [datasetState, dataset, totalWeight, weights, maxMarks, gradingConfig]);
 
   async function handleLogin(event) {
     event.preventDefault();
@@ -184,6 +193,7 @@ export default function App() {
       const response = await analyzeFile(file);
       setDatasetState(response);
       setWeights(buildDefaultWeights(response.dataset.numericColumns));
+      setMaxMarks({});
       setGradingConfig(buildDefaultGradingConfig());
       setSelectedConfigurationId("");
       setResults(null);
@@ -204,6 +214,13 @@ export default function App() {
     setWeights((current) => ({
       ...current,
       [component]: Number(value),
+    }));
+  }
+
+  function handleMaxMarksChange(component, value) {
+    setMaxMarks((current) => ({
+      ...current,
+      [component]: value === "" ? "" : Number(value),
     }));
   }
 
@@ -236,6 +253,75 @@ export default function App() {
         ),
       },
     }));
+  }
+
+  function handleAddGrade(type) {
+    setGradingConfig((current) => {
+      if (type === "boundaries") {
+        const newBoundary = { grade: "", min: 0 };
+        return {
+          ...current,
+          grading: {
+            ...current.grading,
+            boundaries: [...current.grading.boundaries, newBoundary],
+          },
+        };
+      }
+      const newRule = { grade: "", k: 0 };
+      return {
+        ...current,
+        grading: {
+          ...current.grading,
+          rules: [...current.grading.rules, newRule],
+        },
+      };
+    });
+  }
+
+  function handleRemoveGrade(type, index) {
+    setGradingConfig((current) => {
+      if (type === "boundaries") {
+        return {
+          ...current,
+          grading: {
+            ...current.grading,
+            boundaries: current.grading.boundaries.filter((_, i) => i !== index),
+          },
+        };
+      }
+      return {
+        ...current,
+        grading: {
+          ...current.grading,
+          rules: current.grading.rules.filter((_, i) => i !== index),
+        },
+      };
+    });
+  }
+
+  function handleGradeNameChange(type, index, value) {
+    setGradingConfig((current) => {
+      if (type === "boundaries") {
+        return {
+          ...current,
+          grading: {
+            ...current.grading,
+            boundaries: current.grading.boundaries.map((rule, i) =>
+              i === index ? { ...rule, grade: value } : rule,
+            ),
+          },
+        };
+      }
+      return {
+        ...current,
+        grading: {
+          ...current.grading,
+          rules: current.grading.rules.map((rule, i) =>
+            i === index ? { ...rule, grade: value } : rule,
+          ),
+        },
+      };
+    });
   }
 
   function handleGroupStrategyChange(groupStrategy) {
@@ -331,6 +417,7 @@ export default function App() {
   function resetWorkspace() {
     setDatasetState(null);
     setWeights({});
+    setMaxMarks({});
     setResults(null);
     setGradingConfig(buildDefaultGradingConfig());
     setSelectedConfigurationId("");
@@ -412,7 +499,9 @@ export default function App() {
         <WeightConfig
           components={dataset?.numericColumns || []}
           dataset={dataset}
+          maxMarks={maxMarks}
           onEqualizeWeights={equalizeWeights}
+          onMaxMarksChange={handleMaxMarksChange}
           onWeightChange={handleWeightChange}
           totalWeight={totalWeight}
           weights={weights}
@@ -420,10 +509,13 @@ export default function App() {
         <GradingConfig
           dataset={dataset}
           gradingConfig={gradingConfig}
+          onAddGrade={handleAddGrade}
           onBoundaryChange={handleBoundaryChange}
+          onGradeNameChange={handleGradeNameChange}
           onGroupStrategyChange={handleGroupStrategyChange}
           onLoadSavedConfig={handleLoadSavedConfig}
           onModeChange={handleModeChange}
+          onRemoveGrade={handleRemoveGrade}
           onRuleChange={handleRuleChange}
           onSaveConfig={handleSaveConfig}
           savedConfigurations={savedConfigurations}

@@ -1,4 +1,4 @@
-import { Save, Sparkles } from "lucide-react";
+import { Minus, Plus, Save, Sparkles } from "lucide-react";
 
 const DEFAULT_RULES = [
   { grade: "A", k: 1 },
@@ -38,10 +38,16 @@ export default function GradingConfig({
   savedConfigurations,
   onLoadSavedConfig,
   selectedConfigurationId,
+  onAddGrade,
+  onRemoveGrade,
+  onGradeNameChange,
 }) {
   if (!dataset) {
     return null;
   }
+
+  const boundaries = gradingConfig.grading.boundaries;
+  const rules = gradingConfig.grading.rules;
 
   return (
     <section className="section-divider py-10">
@@ -116,23 +122,65 @@ export default function GradingConfig({
             </div>
           ) : null}
 
-          {gradingConfig.mode === "default" ? (
+          {gradingConfig.mode === "default" || gradingConfig.mode === "custom" ? (
             <div className="mt-8 space-y-4">
-              {gradingConfig.grading.boundaries.map((boundary) => (
-                <div key={boundary.grade} className="grid items-center gap-4 border-b border-white/10 pb-4 md:grid-cols-[180px,1fr,140px]">
-                  <div className="input flex items-center text-2xl font-semibold">{boundary.grade}</div>
-                  <div className="h-[6px] rounded-full bg-[#1a2c4d]" />
-                  <div className="input text-right font-mono text-2xl">{boundary.min}</div>
+              {boundaries.map((boundary, index) => (
+                <div key={index} className="grid items-center gap-4 border-b border-white/10 pb-4 md:grid-cols-[180px,1fr,140px,40px]">
+                  <input
+                    className="input flex items-center text-2xl font-semibold"
+                    type="text"
+                    value={boundary.grade}
+                    onChange={(event) => onGradeNameChange("boundaries", index, event.target.value)}
+                  />
+                  <input
+                    min="0"
+                    max="100"
+                    step="0.5"
+                    type="range"
+                    value={boundary.min}
+                    onChange={(event) => onBoundaryChange(index, Number(event.target.value))}
+                  />
+                  <input
+                    className="input text-right font-mono text-2xl"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.5"
+                    value={boundary.min}
+                    onChange={(event) => onBoundaryChange(index, Number(event.target.value))}
+                  />
+                  <button
+                    className="flex h-10 w-10 items-center justify-center border border-white/10 text-slate-400 transition hover:border-rose-400 hover:text-rose-400"
+                    onClick={() => onRemoveGrade("boundaries", index)}
+                    type="button"
+                    title="Remove grade"
+                    disabled={boundaries.length <= 1}
+                  >
+                    <Minus size={16} />
+                  </button>
                 </div>
               ))}
+              <button
+                className="btn-secondary gap-2 mt-2"
+                onClick={() => onAddGrade("boundaries")}
+                type="button"
+              >
+                <Plus size={16} />
+                Add grade
+              </button>
             </div>
           ) : null}
 
           {gradingConfig.mode === "statistical" ? (
             <div className="mt-8 space-y-4">
-              {gradingConfig.grading.rules.map((rule, index) => (
-                <div key={rule.grade} className="grid items-center gap-4 border-b border-white/10 pb-4 md:grid-cols-[180px,1fr,140px]">
-                  <div className="input flex items-center text-2xl font-semibold">{rule.grade}</div>
+              {rules.map((rule, index) => (
+                <div key={index} className="grid items-center gap-4 border-b border-white/10 pb-4 md:grid-cols-[180px,1fr,140px,40px]">
+                  <input
+                    className="input flex items-center text-2xl font-semibold"
+                    type="text"
+                    value={rule.grade}
+                    onChange={(event) => onGradeNameChange("rules", index, event.target.value)}
+                  />
                   <input
                     min="-2"
                     max="2"
@@ -150,35 +198,25 @@ export default function GradingConfig({
                     value={rule.k}
                     onChange={(event) => onRuleChange(index, Number(event.target.value))}
                   />
+                  <button
+                    className="flex h-10 w-10 items-center justify-center border border-white/10 text-slate-400 transition hover:border-rose-400 hover:text-rose-400"
+                    onClick={() => onRemoveGrade("rules", index)}
+                    type="button"
+                    title="Remove grade"
+                    disabled={rules.length <= 1}
+                  >
+                    <Minus size={16} />
+                  </button>
                 </div>
               ))}
-            </div>
-          ) : null}
-
-          {gradingConfig.mode === "custom" ? (
-            <div className="mt-8 space-y-4">
-              {gradingConfig.grading.boundaries.map((boundary, index) => (
-                <div key={boundary.grade} className="grid items-center gap-4 border-b border-white/10 pb-4 md:grid-cols-[180px,1fr,140px]">
-                  <div className="input flex items-center text-2xl font-semibold">{boundary.grade}</div>
-                  <input
-                    min="0"
-                    max="100"
-                    step="0.5"
-                    type="range"
-                    value={boundary.min}
-                    onChange={(event) => onBoundaryChange(index, Number(event.target.value))}
-                  />
-                  <input
-                    className="input text-right font-mono text-2xl"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.5"
-                    value={boundary.min}
-                    onChange={(event) => onBoundaryChange(index, Number(event.target.value))}
-                  />
-                </div>
-              ))}
+              <button
+                className="btn-secondary gap-2 mt-2"
+                onClick={() => onAddGrade("rules")}
+                type="button"
+              >
+                <Plus size={16} />
+                Add grade
+              </button>
             </div>
           ) : null}
         </div>
