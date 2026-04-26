@@ -32,7 +32,8 @@ export default function ResultsTable({ dataset, results, onExport, boundaries })
           <div className="mt-6 flex flex-wrap gap-3">
             {boundaries.map((boundary) => (
               <div key={boundary.grade} className="border border-white/10 bg-[#0b0d11] px-4 py-2 text-sm text-slate-200">
-                <span className="font-semibold text-white">{boundary.grade}</span> {">="} {formatNumber(boundary.min)}
+                <span className="font-semibold text-white">{boundary.grade}</span>{" "}
+                {formatNumber(boundary.min)} – {formatNumber(boundary.max)}
               </div>
             ))}
           </div>

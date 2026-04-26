@@ -302,6 +302,19 @@ def grade_dataset(dataset: dict[str, Any], config: dict[str, Any]) -> dict[str, 
         for row in scored_rows
     ]
 
+    max_score = max(weighted_scores) if weighted_scores else 100.0
+    ranged_boundaries = []
+    for idx, boundary in enumerate(boundaries):
+        upper = round_number(max_score) if idx == 0 else round_number(float(boundaries[idx - 1]["min"]))
+        lower = round_number(max(0.0, float(boundary["min"])))
+        ranged_boundaries.append(
+            {
+                "grade": str(boundary["grade"]),
+                "min": lower,
+                "max": upper,
+            }
+        )
+
     stats_quartiles = quartiles(weighted_scores)
     statistics = {
         "mean": round_number(mean(weighted_scores)),
@@ -311,10 +324,7 @@ def grade_dataset(dataset: dict[str, Any], config: dict[str, Any]) -> dict[str, 
     }
 
     return {
-        "boundaries": [
-            {"grade": str(boundary["grade"]), "min": round_number(float(boundary["min"]))}
-            for boundary in boundaries
-        ],
+        "boundaries": ranged_boundaries,
         "statistics": statistics,
         "analytics": {
             "histogram": histogram(weighted_scores),
