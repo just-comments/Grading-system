@@ -507,6 +507,7 @@ export default function App() {
           weights={weights}
         />
         <GradingConfig
+          computedBoundaries={results?.boundaries || []}
           dataset={dataset}
           gradingConfig={gradingConfig}
           onAddGrade={handleAddGrade}
@@ -520,6 +521,7 @@ export default function App() {
           onSaveConfig={handleSaveConfig}
           savedConfigurations={savedConfigurations}
           selectedConfigurationId={selectedConfigurationId}
+          statistics={results?.statistics || null}
         />
         <AnalyticsPanel results={results} />
         <ResultsTable

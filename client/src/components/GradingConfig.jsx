@@ -1,4 +1,5 @@
 import { Minus, Plus, Save, Sparkles } from "lucide-react";
+import { formatNumber } from "../lib/helpers";
 
 const DEFAULT_RULES = [
   { grade: "A", k: 1 },
@@ -28,6 +29,7 @@ export function buildDefaultGradingConfig() {
 }
 
 export default function GradingConfig({
+  computedBoundaries,
   dataset,
   gradingConfig,
   onModeChange,
@@ -41,6 +43,7 @@ export default function GradingConfig({
   onAddGrade,
   onRemoveGrade,
   onGradeNameChange,
+  statistics,
 }) {
   if (!dataset) {
     return null;
@@ -101,9 +104,15 @@ export default function GradingConfig({
             {gradingConfig.mode === "default"
               ? "Use the standard weighted-percent thresholds."
               : gradingConfig.mode === "statistical"
-                ? "Define each grade as mean plus a multiple of standard deviation."
+                ? "Define each grade as a range based on mean and standard deviation."
                 : "Define minimum weighted percent for each grade band."}
           </p>
+
+          {statistics && gradingConfig.mode === "statistical" ? (
+            <p className="mt-2 text-sm text-slate-500">
+              Mean: {formatNumber(statistics.mean)} | Std Dev: {formatNumber(statistics.standardDeviation)}
+            </p>
+          ) : null}
 
           {dataset.detectedType === "group" ? (
             <div className="mt-8 grid gap-3 md:grid-cols-2">
@@ -173,14 +182,23 @@ export default function GradingConfig({
 
           {gradingConfig.mode === "statistical" ? (
             <div className="mt-8 space-y-4">
-              {rules.map((rule, index) => (
+              {rules.map((rule, index) => {
+                const computed = computedBoundaries.find((b) => b.grade === rule.grade);
+                return (
                 <div key={index} className="grid items-center gap-4 border-b border-white/10 pb-4 md:grid-cols-[180px,1fr,140px,40px]">
-                  <input
-                    className="input flex items-center text-2xl font-semibold"
-                    type="text"
-                    value={rule.grade}
-                    onChange={(event) => onGradeNameChange("rules", index, event.target.value)}
-                  />
+                  <div>
+                    <input
+                      className="input flex items-center text-2xl font-semibold"
+                      type="text"
+                      value={rule.grade}
+                      onChange={(event) => onGradeNameChange("rules", index, event.target.value)}
+                    />
+                    {computed ? (
+                      <p className="mt-1 font-mono text-xs text-slate-500">
+                        {formatNumber(computed.min)} – {formatNumber(computed.max)}
+                      </p>
+                    ) : null}
+                  </div>
                   <input
                     min="-2"
                     max="2"
@@ -208,7 +226,8 @@ export default function GradingConfig({
                     <Minus size={16} />
                   </button>
                 </div>
-              ))}
+                );
+              })}
               <button
                 className="btn-secondary gap-2 mt-2"
                 onClick={() => onAddGrade("rules")}
